@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Maze Runner</title>
+    <style>
+        #maze {
+            display: grid;
+            grid-template-columns: repeat(10, 20px);
+            grid-template-rows: repeat(10, 20px);
+            gap: 1px;
+        }
+        .cell {
+            width: 20px;
+            height: 20px;
+            background-color: #ddd;
+        }
+        .wall {
+            background-color: #333;
+        }
+        .goal {
+            background-color: #0f0;
+        }
+        .player {
+            background-color: #00f;
+        }
+    </style>
+</head>
+<body>
+    <div id="maze"></div>
+    <script>
+        // 迷路を生成する関数
+        function generateMaze() {
+            const size = 10;
+            const maze = Array.from({ length: size }, () => Array(size).fill(1)); // 1: 壁
+
+            function carve(x, y) {
+                maze[y][x] = 0; // 0: 通路
+                const directions = [
+                    [0, -1], // 上
+                    [1, 0],  // 右
+                    [0, 1],  // 下
+                    [-1, 0]  // 左
+                ].sort(() => Math.random() - 0.5); // ランダムに方向を選択
+
+                for (const [dx, dy] of directions) {
+                    const nx = x + dx * 2;
+                    const ny = y + dy * 2;
+                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && maze[ny][nx] === 1) {
+                        maze[y + dy][x + dx] = 0; // 壁を壊す
+                        carve(nx, ny);
+                    }
+                }
+            }
+
+            carve(0, 0); // スタート位置から迷路を生成
+            maze[9][9] = 2; // ゴール位置
+            return maze;
+        }
+
+        let maze = generateMaze(); // 初期迷路を生成
+        const mazeDiv = document.getElementById('maze');
+        const player = { x: 0, y: 0 }; // プレイヤーの初期位置
+
+        // 迷路を描画する関数
+        function drawMaze() {
+            mazeDiv.innerHTML = '';
+            maze.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const div = document.createElement('div');
+                    div.classList.add('cell');
+                    if (cell === 1) div.classList.add('wall');
+                    if (cell === 2) div.classList.add('goal');
+                    if (x === player.x && y === player.y) div.classList.add('player');
+                    mazeDiv.appendChild(div);
+                });
+            });
+        }
+
+        // プレイヤーの移動を処理する関数
+        function movePlayer(dx, dy) {
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+            // 移動先が迷路の範囲内で、壁でない場合に移動
+            if (newX >= 0 && newX < 10 && newY >= 0 && newY < 10 && maze[newY][newX] !== 1) {
+                player.x = newX;
+                player.y = newY;
+                // ゴールに到達した場合
+                if (maze[newY][newX] === 2) {
+                    alert('You win! おめでとう！');
+                    maze = generateMaze(); // 新しい迷路を生成
+                    player.x = 0;
+                    player.y = 0; // プレイヤーをリセット
+                }
+                drawMaze();
+            }
+        }
+
+        // キーボード入力の処理
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp': movePlayer(0, -1); break;
+                case 'ArrowDown': movePlayer(0, 1); break;
+                case 'ArrowLeft': movePlayer(-1, 0); break;
+                case 'ArrowRight': movePlayer(1, 0); break;
+            }
+        });
+
+        // ゲームの初期化
+        drawMaze();
+    </script>
+</body>
+</html>
